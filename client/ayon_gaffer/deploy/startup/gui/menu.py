@@ -16,7 +16,7 @@ import IECore
 log = Logger.get_logger("ayon_gaffer.startup.gui.menu")
 
 # Make sure linter ignores undefined `application`, Gaffer startup provides it
-application = application # noqa
+application = application  # noqa
 
 menu_label = 'AYON'
 
@@ -30,9 +30,6 @@ def ayon_menu(menu):
         return script_window._qtWidget()
 
     definition = IECore.MenuDefinition()
-    context_label = get_context_label().replace('/', '|')
-    definition.append(context_label, {"command": None, "active": False})
-    definition.append("contextDivider", {"divider": True})
 
     definition.append(
         f"Create...",
