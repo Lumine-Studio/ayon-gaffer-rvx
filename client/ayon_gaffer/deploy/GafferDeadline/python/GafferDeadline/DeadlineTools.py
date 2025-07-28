@@ -63,7 +63,27 @@ def inject_ayon_settings(func):
         if DEADLINE_SETTINGS is None:
             fetch_ayon_settings()
         # now we have populated settings.
-        ws_settings = DEADLINE_SETTINGS["deadline_urls"][0]
+
+        # Get the deadline server name from settings
+        deadline_server_name = DEADLINE_SETTINGS.get(
+            "deadline_server", "default")
+
+        # Find matching deadline URL by name
+        ws_settings = None
+        for url_setting in DEADLINE_SETTINGS["deadline_urls"]:
+            if url_setting["name"] == deadline_server_name:
+                ws_settings = url_setting
+                break
+
+        # Fallback to first if specified name not found
+        if ws_settings is None:
+            print(
+                f"Warning: Could not find deadline URL with name '{deadline_server_name}', using first available")
+            ws_settings = DEADLINE_SETTINGS["deadline_urls"][0]
+
+        print(
+            f"Using deadline server: {ws_settings['name']} - {ws_settings['value']}")
+
         auth = (ws_settings["default_username"],
                 ws_settings["default_password"])
         verify = not ws_settings["not_verify_ssl"]
