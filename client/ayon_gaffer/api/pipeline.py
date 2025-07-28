@@ -82,9 +82,12 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             dst_path = self.get_current_workfile()
 
         dst_path = dst_path.replace("\\", "/")
+        dst_path = dst_path.replace(os.sep, "/")
 
         script = get_root()
         script.serialiseToFile(dst_path)
+        dst_path = dst_path.replace("\\", "/").replace(os.sep, "/")
+
         script["fileName"].setValue(dst_path)
         script["unsavedChanges"].setValue(False)
 
@@ -103,6 +106,8 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
 
         script = get_root()
         if script:
+            log.info("Loading workfile: %s", filepath)
+            filepath = filepath.replace("\\", "/").replace(os.sep, "/")
             script["fileName"].setValue(filepath)
             script.load()
         self._on_scene_new(script.ancestor(Gaffer.ScriptContainer), script)

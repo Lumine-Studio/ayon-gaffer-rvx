@@ -100,16 +100,15 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
         self._deadlineJobs = []
         IECore.Log.info("Beginning Deadline submission")
         dispatchData = {}
-        dispatchData["scriptNode"] = rootBatch.preTasks()[0].node().scriptNode()
+        dispatchData["scriptNode"] = rootBatch.preTasks()[0].node().scriptNode()  # noqa
         dispatchData["scriptFile"] = os.path.join(
             self.jobDirectory(),
             os.path.basename(
-                dispatchData["scriptNode"]["fileName"].getValue()
-            ) or "untitled.gfr"
+                dispatchData["scriptNode"]["fileName"].getValue()) or "untitled.gfr"
         )
-        dispatchData["scriptFile"] = dispatchData["scriptFile"].replace("\\", os.sep).replace(
-            "/",
-            os.sep
+        dispatchData["scriptFile"] = dispatchData["scriptFile"].replace("\\", "/").replace(
+            os.sep,
+            "/"
         )
 
         dispatchData["scriptNode"].serialiseToFile(dispatchData["scriptFile"])
@@ -155,7 +154,8 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
         if batch.blindData().get("deadlineDispatcher:visited"):
             return self.__getGafferDeadlineJob(batch.node(), batch.context())
 
-        deadlineJob = self.__getGafferDeadlineJob(batch.node(), batch.context())
+        deadlineJob = self.__getGafferDeadlineJob(
+            batch.node(), batch.context())
         if not deadlineJob:
             deadlineJob = GafferDeadline.GafferDeadlineJob(batch.node())
             deadlineJob.setContext(batch.context())
@@ -164,7 +164,8 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
 
         deadlineJob.addBatch(batch, batch.frames())
         for upstreamBatch in batch.preTasks():
-            parentDeadlineJob = self.__buildDeadlineJobWalk(upstreamBatch, dispatchData)
+            parentDeadlineJob = self.__buildDeadlineJobWalk(
+                upstreamBatch, dispatchData)
             if parentDeadlineJob is not None:
                 deadlineJob.addParentJob(parentDeadlineJob)
 
@@ -226,10 +227,12 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
 
         if deadlinePlug is not None:
             initialStatus = (
-                "Suspended" if deadlinePlug["submitSuspended"].getValue() else "Active"
+                "Suspended" if deadlinePlug["submitSuspended"].getValue(
+                ) else "Active"
             )
             machineListType = (
-                "Blacklist" if deadlinePlug["isBlackList"].getValue() else "Whitelist"
+                "Blacklist" if deadlinePlug["isBlackList"].getValue(
+                ) else "Whitelist"
             )
 
             # to prevent Deadline from splitting up our tasks (since we've already done that based
@@ -240,54 +243,58 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
             )
             frameString = ""
             for t in deadlineJob.getTasks():
-                chunkSize = max(t.getEndFrame() - t.getStartFrame() + 1, chunkSize)
+                chunkSize = max(t.getEndFrame() -
+                                t.getStartFrame() + 1, chunkSize)
                 if t.getStartFrame() == t.getEndFrame():
                     frameString += ",{}".format(t.getStartFrame())
                 else:
-                    frameString += ",{}-{}".format(t.getStartFrame(), t.getEndFrame())
+                    frameString += ",{}-{}".format(t.getStartFrame(),
+                                                   t.getEndFrame())
 
             context = deadlineJob.getContext()
 
             primary_pool = context.substitute(deadlinePlug["pool"].getValue())
             secondary_pool = context.substitute(
-                            deadlinePlug["secondaryPool"].getValue()
-                        )
+                deadlinePlug["secondaryPool"].getValue()
+            )
             group = context.substitute(deadlinePlug["group"].getValue())
 
             with Gaffer.Context(deadlineJob.getContext()) as c:
                 jobInfo = {
-                            "Name": (
-                                "{}{}{}".format(
-                                    dispatchData["dispatchJobName"],
-                                    "." if dispatchData["dispatchJobName"] else "",
-                                    gafferNode.relativeName(dispatchData["scriptNode"]),
-                                )
-                            ),
-                            "UserName": getpass.getuser(),
-                            "Frames": frameString,
-                            "ChunkSize": chunkSize,
-                            "Plugin": "Gaffer" if not isinstance(
-                                gafferNode,
-                                GafferDeadline.DeadlineTask
-                            ) else gafferNode["plugin"].getValue(),
-                            "BatchName": deadlinePlug["batchName"].getValue(),
-                            "Comment": deadlinePlug["comment"].getValue(),
-                            "Department": deadlinePlug["department"].getValue(),
-                            "Pool": primary_pool,
-                            "SecondaryPool": secondary_pool,
-                            "Group": group,
-                            "Priority": deadlinePlug["priority"].getValue(),
-                            "TaskTimeoutMinutes": int(deadlinePlug["taskTimeout"].getValue()),
-                            "EnableAutoTimeout": deadlinePlug["enableAutoTimeout"].getValue(),
-                            "ConcurrentTasks": deadlinePlug["concurrentTasks"].getValue(),
-                            "MachineLimit": deadlinePlug["machineLimit"].getValue(),
-                            machineListType: deadlinePlug["machineList"].getValue(),
-                            "LimitGroups": deadlinePlug["limits"].getValue(),
-                            "OnJobComplete": deadlinePlug["onJobComplete"].getValue(),
-                            "InitialStatus": initialStatus,
-                            }
+                    "Name": (
+                        "{}{}{}".format(
+                            dispatchData["dispatchJobName"],
+                            "." if dispatchData["dispatchJobName"] else "",
+                            gafferNode.relativeName(
+                                dispatchData["scriptNode"]),
+                        )
+                    ),
+                    "UserName": getpass.getuser(),
+                    "Frames": frameString,
+                    "ChunkSize": chunkSize,
+                    "Plugin": "Gaffer" if not isinstance(
+                        gafferNode,
+                        GafferDeadline.DeadlineTask
+                    ) else gafferNode["plugin"].getValue(),
+                    "BatchName": deadlinePlug["batchName"].getValue(),
+                    "Comment": deadlinePlug["comment"].getValue(),
+                    "Department": deadlinePlug["department"].getValue(),
+                    "Pool": primary_pool,
+                    "SecondaryPool": secondary_pool,
+                    "Group": group,
+                    "Priority": deadlinePlug["priority"].getValue(),
+                    "TaskTimeoutMinutes": int(deadlinePlug["taskTimeout"].getValue()),
+                    "EnableAutoTimeout": deadlinePlug["enableAutoTimeout"].getValue(),
+                    "ConcurrentTasks": deadlinePlug["concurrentTasks"].getValue(),
+                    "MachineLimit": deadlinePlug["machineLimit"].getValue(),
+                    machineListType: deadlinePlug["machineList"].getValue(),
+                    "LimitGroups": deadlinePlug["limits"].getValue(),
+                    "OnJobComplete": deadlinePlug["onJobComplete"].getValue(),
+                    "InitialStatus": initialStatus,
+                }
 
-                auxFiles = deadlineJob.getAuxFiles()   # this will already have substitutions included
+                # this will already have substitutions included
+                auxFiles = deadlineJob.getAuxFiles()
                 auxFiles += [f for f in deadlinePlug["auxFiles"].getValue()]
                 deadlineJob.setAuxFiles(auxFiles)
 
@@ -296,14 +303,16 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
 
                 environmentVariables = IECore.CompoundData()
 
-                deadlinePlug["environmentVariables"].fillCompoundData(environmentVariables)
-                extraEnvironmentVariables = deadlinePlug["extraEnvironmentVariables"].getValue()
+                deadlinePlug["environmentVariables"].fillCompoundData(
+                    environmentVariables)
+                extraEnvironmentVariables = deadlinePlug["extraEnvironmentVariables"].getValue(
+                )
                 for name, value in extraEnvironmentVariables.items():
                     environmentVariables[name] = value
                 for name, value in environmentVariables.items():
                     deadlineJob.appendEnvironmentVariable(name, str(value))
 
-                # propagate several key environment variables 
+                # propagate several key environment variables
                 if AYON_MODE:
                     vars_to_submit = []
                     extra_vars = {}
@@ -322,15 +331,18 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
                     env_vars = {}
 
                 print("===", env_vars, extra_vars)
-                
+
                 for name in vars_to_submit:
-                    deadlineJob.appendEnvironmentVariable(name, os.environ.get(name, ''))
+                    deadlineJob.appendEnvironmentVariable(
+                        name, os.environ.get(name, ''))
                 for name, value in extra_vars.items():
                     deadlineJob.appendEnvironmentVariable(name, value)
 
                 deadlineSettings = IECore.CompoundData()
-                deadlinePlug["deadlineSettings"].fillCompoundData(deadlineSettings)
-                extraDeadlineSettings = deadlinePlug["extraDeadlineSettings"].getValue()
+                deadlinePlug["deadlineSettings"].fillCompoundData(
+                    deadlineSettings)
+                extraDeadlineSettings = deadlinePlug["extraDeadlineSettings"].getValue(
+                )
                 for name, value in extraDeadlineSettings.items():
                     deadlineSettings[name] = value
                 for name, value in deadlineSettings.items():
@@ -379,11 +391,13 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
                     if (len(dependencies) > 0):
                         deadlineJob._frameDependencyOffsetStart = (
                             list(dependencies)[0].getUpstreamDeadlineTask().getStartFrame() -
-                            list(dependencies)[0].getDeadlineTask().getStartFrame()
+                            list(dependencies)[
+                                0].getDeadlineTask().getStartFrame()
                         )
                         deadlineJob._frameDependencyOffsetEnd = (
                             list(dependencies)[0].getUpstreamDeadlineTask().getEndFrame() -
-                            list(dependencies)[0].getDeadlineTask().getEndFrame()
+                            list(dependencies)[
+                                0].getDeadlineTask().getEndFrame()
                         )
 
                         for d in dependencies:
@@ -515,7 +529,8 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
                     contextArgs.extend(
                         [
                             "\"-{}\"".format(entry),
-                            "\"{}\"".format(repr(deadlineJob.getContext()[entry]))
+                            "\"{}\"".format(
+                                repr(deadlineJob.getContext()[entry]))
                         ]
                     )
             if contextArgs and not isinstance(gafferNode, GafferDeadline.DeadlineTask):
@@ -528,13 +543,16 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
 
             jobId, output = deadlineJob.submitJob(self.jobDirectory())
             if jobId is None:
-                IECore.Log.error(jobInfo["Name"], "failed to submit to Deadline.", output)
+                IECore.Log.error(
+                    jobInfo["Name"], "failed to submit to Deadline.", output)
             else:
-                IECore.Log.info(jobInfo["Name"], "submission succeeded.", output)
+                IECore.Log.info(jobInfo["Name"],
+                                "submission succeeded.", output)
 
             return deadlineJob.getJobID()
         else:
-            IECore.Log.error("GafferDeadline", "Failed to acquire Deadline plug")
+            IECore.Log.error("GafferDeadline",
+                             "Failed to acquire Deadline plug")
             return None
 
     @staticmethod
@@ -544,7 +562,8 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
             return
 
         parentPlug["deadline"] = Gaffer.Plug()
-        parentPlug["deadline"]["batchName"] = Gaffer.StringPlug(defaultValue="${script:name}")
+        parentPlug["deadline"]["batchName"] = Gaffer.StringPlug(
+            defaultValue="${script:name}")
         parentPlug["deadline"]["comment"] = Gaffer.StringPlug()
         parentPlug["deadline"]["department"] = Gaffer.StringPlug()
         parentPlug["deadline"]["pool"] = Gaffer.StringPlug()
@@ -555,22 +574,31 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
             minValue=0,
             maxValue=100
         )
-        parentPlug["deadline"]["taskTimeout"] = Gaffer.IntPlug(defaultValue=0, minValue=0)
-        parentPlug["deadline"]["enableAutoTimeout"] = Gaffer.BoolPlug(defaultValue=False)
+        parentPlug["deadline"]["taskTimeout"] = Gaffer.IntPlug(
+            defaultValue=0, minValue=0)
+        parentPlug["deadline"]["enableAutoTimeout"] = Gaffer.BoolPlug(
+            defaultValue=False)
         parentPlug["deadline"]["concurrentTasks"] = Gaffer.IntPlug(
             defaultValue=1,
             minValue=1,
             maxValue=16
         )
-        parentPlug["deadline"]["threads"] = Gaffer.IntPlug(defaultValue=0, minValue=0)
-        parentPlug["deadline"]["machineLimit"] = Gaffer.IntPlug(defaultValue=0, minValue=0)
+        parentPlug["deadline"]["threads"] = Gaffer.IntPlug(
+            defaultValue=0, minValue=0)
+        parentPlug["deadline"]["machineLimit"] = Gaffer.IntPlug(
+            defaultValue=0, minValue=0)
         parentPlug["deadline"]["machineList"] = Gaffer.StringPlug()
-        parentPlug["deadline"]["isBlackList"] = Gaffer.BoolPlug(defaultValue=False)
+        parentPlug["deadline"]["isBlackList"] = Gaffer.BoolPlug(
+            defaultValue=False)
         parentPlug["deadline"]["limits"] = Gaffer.StringPlug()
-        parentPlug["deadline"]["onJobComplete"] = Gaffer.StringPlug(defaultValue="Nothing")
-        parentPlug["deadline"]["submitSuspended"] = Gaffer.BoolPlug(defaultValue=False)
-        parentPlug["deadline"]["dependencyMode"] = Gaffer.StringPlug(defaultValue="Auto")
-        parentPlug["deadline"]["logLevel"] = Gaffer.StringPlug(defaultValue="INFO")
+        parentPlug["deadline"]["onJobComplete"] = Gaffer.StringPlug(
+            defaultValue="Nothing")
+        parentPlug["deadline"]["submitSuspended"] = Gaffer.BoolPlug(
+            defaultValue=False)
+        parentPlug["deadline"]["dependencyMode"] = Gaffer.StringPlug(
+            defaultValue="Auto")
+        parentPlug["deadline"]["logLevel"] = Gaffer.StringPlug(
+            defaultValue="INFO")
         parentPlug["deadline"]["outputs"] = Gaffer.StringVectorDataPlug(
             defaultValue=IECore.StringVectorData()
         )
@@ -583,7 +611,8 @@ class DeadlineDispatcher(GafferDispatch.Dispatcher):
         parentPlug["deadline"]["extraEnvironmentVariables"] = Gaffer.CompoundObjectPlug()
 
 
-IECore.registerRunTimeTyped(DeadlineDispatcher, typeName="GafferDeadline::DeadlineDispatcher")
+IECore.registerRunTimeTyped(
+    DeadlineDispatcher, typeName="GafferDeadline::DeadlineDispatcher")
 
 GafferDispatch.Dispatcher.registerDispatcher(
     "Deadline",

@@ -156,10 +156,10 @@ def make_scene_load_box(
     box.setName(box_name)
 
     filename_plug = Gaffer.StringPlug(
-                "fileName",
-                defaultValue="",
-                flags=Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic,
-            )
+        "fileName",
+        defaultValue="",
+        flags=Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic,
+    )
     Gaffer.Metadata.registerValue(filename_plug, "nodule:type", "")
     box.addChild(filename_plug)
 
@@ -252,10 +252,10 @@ def create_sub_groups(parent, sub_groups):
         plug_label = f"Enable {subs}/{grp}"
         plug_name = plug_label.replace(" ", "_").replace("/", "_")
         plug = Gaffer.BoolPlug(
-                plug_name,
-                defaultValue=True,
-                flags=Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic,
-            )
+            plug_name,
+            defaultValue=True,
+            flags=Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic,
+        )
         parent.addChild(plug)
         Gaffer.Metadata.registerValue(plug, "nodule:type", "")
         Gaffer.Metadata.registerValue(plug, "label", plug_label)
@@ -650,7 +650,6 @@ def get_node_connections(node, include_non_serializable=False):
         if not include_non_serializable and not bool(plug.getFlags() & Gaffer.Plug.Flags.Serialisable):
             continue
 
-
         plugmap = {'in': [], 'out': []}
         if the_input is not None:
             if not node.isAncestorOf(the_input):
@@ -669,7 +668,8 @@ def get_node_connections(node, include_non_serializable=False):
 
 def set_root_context_variables(script_node, var_dict):
     context_vars = script_node["variables"]
-    existing_ayon_variables = [var["name"].getValue() for var in context_vars.children()]
+    existing_ayon_variables = [var["name"].getValue()
+                               for var in context_vars.children()]
     for var_name, var_data in var_dict.items():
         if isinstance(var_data, (tuple, list)):
             # ok we got a vector of sorts
@@ -722,7 +722,8 @@ def create_render_shot_plug():
 
 def create_multishot_context_vars(script_node):
     context_vars = script_node["variables"]
-    existing_variables = [var["name"].getValue() for var in context_vars.children()]
+    existing_variables = [var["name"].getValue()
+                          for var in context_vars.children()]
     if "render:shot" not in existing_variables:
         render_shot_plug = create_render_shot_plug()
         context_vars.addChild(render_shot_plug)
