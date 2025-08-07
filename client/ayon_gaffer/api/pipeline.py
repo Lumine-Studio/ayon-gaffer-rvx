@@ -178,6 +178,22 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         scripts_list.childAddedSignal().connect(self._on_scene_new,
                                                 scoped=False)
 
+        scripts_list.childRemovedSignal().connect(self._on_script_removed,
+                                                  scoped=False)
+
+    def _on_script_removed(self, scripts_list, script_node):
+        """Handle when a script is removed/closed"""
+        current_root = get_root()
+        if current_root == script_node:
+            remaining_scripts = [child for child in scripts_list.children()
+                                 if isinstance(child, Gaffer.ScriptNode)]
+            if remaining_scripts:
+                set_root(remaining_scripts[-1])
+                log.info(f"Root updated to: {remaining_scripts[-1]}")
+            else:
+                set_root(None)
+                log.info("No scripts remaining, root set to None")
+
     def _on_scene_new(self, script_container, script_node):
         # Update the projectRootDirectory variable for new workfile scripts
         ayon_gaffer.api.lib.create_multishot_context_vars(script_node)

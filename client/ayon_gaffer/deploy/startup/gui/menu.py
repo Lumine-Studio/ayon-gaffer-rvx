@@ -26,7 +26,13 @@ def ayon_menu(menu):
 
     def get_main_window(menu):
         script_window = menu.ancestor(GafferUI.ScriptWindow)
-        set_root(script_window.scriptNode())     # todo: avoid hack
+        current_script = script_window.scriptNode()
+
+        from ayon_gaffer.api.pipeline import get_root
+        if get_root() != current_script:
+            set_root(current_script)
+            log.info(f"Setting root to: {current_script}")
+
         return script_window._qtWidget()
 
     definition = IECore.MenuDefinition()
