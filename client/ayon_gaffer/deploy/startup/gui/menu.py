@@ -54,22 +54,6 @@ def ayon_menu(menu):
         {"command": lambda menu: host_tools.show_scene_inventory(
             parent=get_main_window(menu))}
     )
-    definition.append(
-        f"Library...",
-        {"command": lambda menu: host_tools.show_library_loader(
-            parent=get_main_window(menu))}
-    )
-
-    # Divider
-    definition.append(f"ActionsDivider", {"divider": True})
-    definition.append(
-        f"Set frame range...",
-        {"command": lambda menu: set_frame_range_callback(menu)}
-    )
-    definition.append(
-        f"Update context variables",
-        {"command": lambda menu: update_root_context_variables_callback(menu)}
-    )
 
     # Divider
     definition.append(f"WorkFilesDivider", {"divider": True})
@@ -91,19 +75,6 @@ def set_frame_range_callback(menu):
     scriptWindow = menu.ancestor(GafferUI.ScriptWindow)
     script_node = scriptWindow.scriptNode()
     lib.set_frame_range(script_node)
-
-
-def update_root_context_variables_callback(menu):
-    host = registered_host()
-
-    scriptWindow = menu.ancestor(GafferUI.ScriptWindow)
-    script_node = scriptWindow.scriptNode()
-    ayon_context = host.get_current_context()
-    lib.update_root_context_variables(
-        script_node,
-        ayon_context["project_name"],
-        ayon_context["folder_path"]
-    )
 
 
 def _install_ayon():

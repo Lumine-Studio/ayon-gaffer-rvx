@@ -448,37 +448,6 @@ def set_frame_range(script_node,
         playback.setFrameRange(frame_start, frame_end)
 
 
-def set_framerate(script_node):
-    fps = script_node.context().get("ayon:fps")
-    if fps is None:
-        log.warning("NO FRAMERATE")
-        return
-
-    script_node['framesPerSecond'].setValue(fps)
-    log.info(f"Set framerate to [{fps}]")
-
-
-def update_root_context_variables(script_node, project_name, folder_path):
-    folder = ayon_api.get_folder_by_path(project_name, folder_path)
-
-    fps = folder["attrib"]["fps"]
-    res_x = folder["attrib"]["resolutionWidth"]
-    res_y = folder["attrib"]["resolutionHeight"]
-    frame_start = folder["attrib"]["frameStart"]
-    frame_end = folder["attrib"]["frameEnd"]
-    handle_start = folder["attrib"]["handleStart"]
-    handle_end = folder["attrib"]["handleEnd"]
-
-    set_root_context_variables(script_node, {
-        "fps": fps,
-        "resolution": (res_x, res_y),
-        "frame_start": frame_start,
-        "frame_end": frame_end,
-        "handle_start": handle_start,
-        "handle_end": handle_end,
-    })
-
-
 def replace_node(old_node, new_node, ignore_plug_names=[], rename=True):
     all_plugs = []
     get_all_plugs(old_node, all_plugs)
@@ -664,46 +633,6 @@ def get_node_connections(node, include_non_serializable=False):
             continue
         plugs[plug.relativeName(node)] = plugmap
     return plugs
-
-
-def set_root_context_variables(script_node, var_dict):
-    context_vars = script_node["variables"]
-    existing_ayon_variables = [var["name"].getValue()
-                               for var in context_vars.children()]
-    for var_name, var_data in var_dict.items():
-        if isinstance(var_data, (tuple, list)):
-            # ok we got a vector of sorts
-            if len(var_data) == 2:
-                plug_type = Gaffer.V2iPlug
-                default_value = imath.V2i(0, 0)
-                var_data = imath.V2i(var_data[0], var_data[1])
-        elif isinstance(var_data, int):
-            plug_type = Gaffer.IntPlug
-            default_value = var_data
-        elif isinstance(var_data, float):
-            plug_type = Gaffer.FloatPlug
-            default_value = var_data
-        else:
-            raise RuntimeError(
-                f"Unknown data type [{var_data}] for variable {var_name}")
-
-        if not var_name.startswith("ayon:"):
-            var_name = f"ayon:{var_name}"
-
-        if var_name not in existing_ayon_variables:
-            context_vars.addChild(
-                Gaffer.NameValuePlug(
-                    var_name,
-                    plug_type(
-                        var_name,
-                        defaultValue=default_value,
-                        flags=Gaffer.Plug.Flags.Default | Gaffer.Plug.Flags.Dynamic
-                    ),
-                    var_name
-                )
-            )
-
-        context_vars[var_name]["value"].setValue(var_data)
 
 
 def create_render_shot_plug():

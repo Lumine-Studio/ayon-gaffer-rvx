@@ -5,6 +5,7 @@ import sys
 import json
 
 import Gaffer  # noqa
+import GafferUI.FileMenu
 
 from ayon_core.host import HostBase, IWorkfileHost, ILoadHost, IPublishHost
 from ayon_gaffer.api.nodes import RenderLayerNode
@@ -77,6 +78,12 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
     def get_workfile_extensions(self):
         return [".gfr"]
 
+    def close_window(self, script_window):
+        """
+        Closes the given script window.
+        """
+        script_window.close()
+
     def save_workfile(self, dst_path=None):
         if not dst_path:
             dst_path = self.get_current_workfile()
@@ -101,16 +108,21 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         return dst_path
 
     def open_workfile(self, filepath):
+        filepath = filepath.replace("\\", "/").replace(os.sep, "/")
+
         if not os.path.exists(filepath):
             raise RuntimeError("File does not exist: {}".format(filepath))
 
         script = get_root()
-        if script:
-            log.info("Loading workfile: %s", filepath)
-            filepath = filepath.replace("\\", "/").replace(os.sep, "/")
-            script["fileName"].setValue(filepath)
-            script.load()
+        script_window = GafferUI.ScriptWindow.acquire(script)
+
+        GafferUI.FileMenu.addScript(self.application.root(), filepath)
+
+        GafferUI.EventLoop.addIdleCallback(
+            lambda: self.close_window(script_window))
+
         self._on_scene_new(script.ancestor(Gaffer.ScriptContainer), script)
+
         return filepath
 
     def get_current_workfile(self):
@@ -166,24 +178,8 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
         scripts_list.childAddedSignal().connect(self._on_scene_new,
                                                 scoped=False)
 
-    def update_project_root_directory(self, script_node):
-        log.info("updating project root directory")
-        script_node['variables']['projectRootDirectory']['value'].setValue(
-            self.work_root(os.environ))  # noqa
-
-    def update_root_context_variables(self, script_node):
-        ctxt = self.get_current_context()
-
-        ayon_gaffer.api.lib.update_root_context_variables(
-            script_node,
-            ctxt["project_name"],
-            ctxt["folder_path"]
-        )
-
     def _on_scene_new(self, script_container, script_node):
         # Update the projectRootDirectory variable for new workfile scripts
-        self.update_project_root_directory(script_node)
-        self.update_root_context_variables(script_node)
         ayon_gaffer.api.lib.create_multishot_context_vars(script_node)
         ayon_gaffer.api.lib.set_framerate(script_node)
         log.debug(f'Adding childAddedSignal to {script_node}')
@@ -274,7 +270,7 @@ def imprint(node: Gaffer.Node,
             try:
                 if value is None:
                     value = ""
-                print(value)
+                log.warning(value)
                 node["user"][key].setValue(value)
                 continue
             except Exception:
