@@ -35,6 +35,26 @@ def ayon_menu(menu):
 
         return script_window._qtWidget()
 
+    def _safe_show_workfiles(menu):
+        from ayon_core.tools.utils import host_tools
+
+        parent = get_main_window(menu)
+        try:
+            host_tools.show_workfiles(parent=parent, use_context=True)
+        except RuntimeError as e:
+            if "Internal C++ object" in str(e) and "deleted" in str(e):
+                log.warning(
+                    "WorkfilesToolWindow invalid, resetting tool cache...")
+                try:
+                    host_tools._SingletonPoint.helper = host_tools.HostToolsHelper()
+                except Exception:
+                    for attr in ("workfiles_tool", "tools", "instances", "cache"):
+                        if hasattr(host_tools._SingletonPoint, attr):
+                            setattr(host_tools._SingletonPoint, attr, None)
+                host_tools.show_workfiles(parent=parent, use_context=True)
+            else:
+                raise
+
     definition = IECore.MenuDefinition()
 
     definition.append(
@@ -56,9 +76,8 @@ def ayon_menu(menu):
             tab="publish")}
     )
     definition.append(
-        f"Manage...",
-        {"command": lambda menu: host_tools.show_scene_inventory(
-            parent=get_main_window(menu))}
+        f"Work Files...",
+        {"command": lambda menu: _safe_show_workfiles(menu)}
     )
 
     # Divider

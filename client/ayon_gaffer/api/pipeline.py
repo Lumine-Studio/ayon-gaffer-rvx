@@ -182,7 +182,6 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
                                                   scoped=False)
 
     def _on_script_removed(self, scripts_list, script_node):
-        """Handle when a script is removed/closed"""
         current_root = get_root()
         if current_root == script_node:
             remaining_scripts = [child for child in scripts_list.children()
@@ -193,6 +192,11 @@ class GafferHost(HostBase, IWorkfileHost, ILoadHost, IPublishHost):
             else:
                 set_root(None)
                 log.info("No scripts remaining, root set to None")
+        try:
+            from ayon_core.tools.utils import host_tools
+            host_tools._SingletonPoint.helper = host_tools.HostToolsHelper()
+        except Exception:
+            pass
 
     def _on_scene_new(self, script_container, script_node):
         # Update the projectRootDirectory variable for new workfile scripts
